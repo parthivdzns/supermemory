@@ -93,6 +93,19 @@ interface ConnectedKey {
 	createdAt?: string | null
 }
 
+interface ConnectedMcpKey {
+	keyId: string
+	keyStart: string | null
+	lastRequest?: string | null
+	createdAt?: string | null
+}
+
+function isMcpAuthMetadata(metadata: { sm_source?: string; sm_kind?: string }) {
+	return (
+		metadata.sm_source === "mcp" || metadata.sm_kind === "mcp_oauth_exchange"
+	)
+}
+
 function toIsoDate(value: string | Date | null | undefined): string | null {
 	if (!value) return null
 	const d = value instanceof Date ? value : new Date(value)
@@ -140,6 +153,34 @@ function parsePluginAuthKeys(
 		} catch {}
 	}
 	return { active, setup }
+}
+
+function parseMcpAuthKeys(
+	apiKeys: ListedApiKey[],
+	keyPrefix: (key: ListedApiKey) => string | null,
+): ConnectedMcpKey[] {
+	const keys: ConnectedMcpKey[] = []
+	for (const key of apiKeys) {
+		if (key.enabled === false) continue
+		if (!key.metadata) continue
+		try {
+			const metadata =
+				typeof key.metadata === "string"
+					? (JSON.parse(key.metadata) as {
+							sm_source?: string
+							sm_kind?: string
+						})
+					: (key.metadata as { sm_source?: string; sm_kind?: string })
+			if (!isMcpAuthMetadata(metadata)) continue
+			keys.push({
+				keyId: key.id,
+				keyStart: keyPrefix(key),
+				lastRequest: toIsoDate(key.lastRequest),
+				createdAt: toIsoDate(key.createdAt),
+			})
+		} catch {}
+	}
+	return keys
 }
 
 type ListedApiKey = {
@@ -1036,6 +1077,31 @@ function ActiveButton({
 	)
 }
 
+function McpConnectedPill({
+	connectedAt,
+	lastActive,
+}: {
+	connectedAt?: string | null
+	lastActive?: string | null
+}) {
+	return (
+		<span
+			className={cn(
+				dmSans125ClassName(),
+				"flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-[#00AC3F] sm:text-[13px]",
+			)}
+		>
+			<span className="size-[7px] rounded-full bg-[#00AC3F]" />
+			Connected
+			{(lastActive ?? connectedAt) && (
+				<span className="text-[11px] font-normal text-[#737373]">
+					Â· {formatRelativeTime(lastActive ?? connectedAt)}
+				</span>
+			)}
+		</span>
+	)
+}
+
 function FinishSetupButton({ onClick }: { onClick: () => void }) {
 	return (
 		<PillButton onClick={onClick}>
@@ -1137,7 +1203,18 @@ interface ConnectorEntry {
 	onReconnect: () => void
 }
 
-type RailEntry = PluginEntry | ConnectorEntry
+interface McpEntry {
+	kind: "mcp"
+	id: string
+	name: string
+	icon: ReactNode
+	connectionCount: number
+	createdAt: string | null
+	lastActive: string | null
+	onManage: () => void
+}
+
+type RailEntry = PluginEntry | ConnectorEntry | McpEntry
 
 function railConnectionMeta(connection: Connection) {
 	const m = connection.metadata as Record<string, unknown> | undefined
@@ -1423,6 +1500,60 @@ function ConnectorRailRow({ entry }: { entry: ConnectorEntry }) {
 	)
 }
 
+function McpRailRow({ entry }: { entry: McpEntry }) {
+	const [expanded, setExpanded] = useState(false)
+	const lastTime = entry.lastActive ?? entry.createdAt
+	const suffix = [
+		entry.connectionCount > 1 ? `${entry.connectionCount} connections` : null,
+		lastTime ? formatRelativeTime(lastTime) : null,
+	]
+		.filter(Boolean)
+		.join(" Â· ")
+	return (
+		<RailRow
+			icon={entry.icon}
+			name={entry.name}
+			expanded={expanded}
+			onToggle={() => setExpanded((v) => !v)}
+			statusLine={
+				<div className="flex min-w-0 items-center gap-1.5">
+					<ActiveStatusDot />
+					{suffix && (
+						<span
+							className={cn(
+								dmSans125ClassName(),
+								"min-w-0 truncate text-[11px] text-[#737373]",
+							)}
+						>
+							Â· {suffix}
+						</span>
+					)}
+				</div>
+			}
+		>
+			{entry.createdAt && (
+				<RailDetail
+					label="Connected"
+					value={formatRelativeTime(entry.createdAt)}
+				/>
+			)}
+			{entry.lastActive && (
+				<RailDetail
+					label="Last active"
+					value={formatRelativeTime(entry.lastActive)}
+				/>
+			)}
+			<RailDetail
+				label="MCP keys"
+				value={`${entry.connectionCount} connected`}
+			/>
+			<div className="mt-1 flex flex-wrap gap-1.5">
+				<RailAction label="Manage" onClick={entry.onManage} />
+			</div>
+		</RailRow>
+	)
+}
+
 const SKELETON_KEYS = ["s1", "s2", "s3", "s4", "s5"]
 
 function RailSkeleton({ rows }: { rows: number }) {
@@ -1521,6 +1652,8 @@ function ActiveConnectionsRail({
 					{entries.map((entry) =>
 						entry.kind === "plugin" ? (
 							<PluginRailRow key={entry.id} entry={entry} />
+						) : entry.kind === "mcp" ? (
+							<McpRailRow key={entry.id} entry={entry} />
 						) : (
 							<ConnectorRailRow key={entry.id} entry={entry} />
 						),
@@ -1879,6 +2012,8 @@ function MobileActivityPanel({
 							{entries.map((entry) =>
 								entry.kind === "plugin" ? (
 									<PluginRailRow key={entry.id} entry={entry} />
+								) : entry.kind === "mcp" ? (
+									<McpRailRow key={entry.id} entry={entry} />
 								) : (
 									<ConnectorRailRow key={entry.id} entry={entry} />
 								),
@@ -2524,6 +2659,11 @@ export function IntegrationsView({
 		[apiKeys, keyPrefix],
 	)
 
+	const activeMcpKeys = useMemo(
+		() => parseMcpAuthKeys(apiKeys, keyPrefix),
+		[apiKeys, keyPrefix],
+	)
+
 	const activePluginById = useMemo(() => {
 		const map = new Map<string, ConnectedKey>()
 		for (const key of activePlugins) {
@@ -2540,6 +2680,20 @@ export function IntegrationsView({
 		}
 		return map
 	}, [activePlugins])
+
+	const activeMcpKey = useMemo(() => {
+		let latest: ConnectedMcpKey | null = null
+		for (const key of activeMcpKeys) {
+			if (!latest) {
+				latest = key
+				continue
+			}
+			const a = toMs(key.lastRequest ?? key.createdAt)
+			const b = toMs(latest.lastRequest ?? latest.createdAt)
+			if (a >= b) latest = key
+		}
+		return latest
+	}, [activeMcpKeys])
 
 	const activeCountByPlugin = useMemo(() => {
 		const map = new Map<string, number>()
@@ -2727,12 +2881,21 @@ export function IntegrationsView({
 			if (item.kind === "connector") {
 				return connectionsByProvider[item.provider].length > 0
 			}
+			if (item.kind === "mcp-client") {
+				return !!activeMcpKey
+			}
 			if (item.kind === "import") {
 				return tweetCount > 0
 			}
 			return false
 		},
-		[activePluginById, connectionsByProvider, publicMode, tweetCount],
+		[
+			activeMcpKey,
+			activePluginById,
+			connectionsByProvider,
+			publicMode,
+			tweetCount,
+		],
 	)
 
 	const counts = useMemo<Record<CategoryFilter, number>>(
@@ -2792,6 +2955,24 @@ export function IntegrationsView({
 				},
 			})
 		}
+		if (activeMcpKey) {
+			rows.push({
+				ts: toMs(activeMcpKey.lastRequest ?? activeMcpKey.createdAt),
+				entry: {
+					kind: "mcp",
+					id: "mcp",
+					name: "Supermemory MCP",
+					icon: <MCPIcon className="size-6" />,
+					connectionCount: activeMcpKeys.length,
+					createdAt: activeMcpKey.createdAt ?? null,
+					lastActive: activeMcpKey.lastRequest ?? null,
+					onManage: () => {
+						void setMcpClient("mcp-url")
+						setMcpModalOpen(true)
+					},
+				},
+			})
+		}
 		for (const provider of [
 			"google-drive",
 			"notion",
@@ -2829,11 +3010,14 @@ export function IntegrationsView({
 		rows.sort((a, b) => b.ts - a.ts)
 		return rows.map((r) => r.entry)
 	}, [
+		activeMcpKey,
+		activeMcpKeys.length,
 		activePluginById,
 		activeCountByPlugin,
 		connectionsByProvider,
 		allProjects,
 		setAddDoc,
+		setMcpClient,
 		addConnectionMutation,
 	])
 
@@ -2886,6 +3070,7 @@ export function IntegrationsView({
 	const claudeCodeConnected = activePluginById.has("claude_code")
 	const claudeCodeNeedsPro =
 		!isAutumnLoading && !hasProProduct && !isFreeTierPlugin("claude_code")
+	const mcpConnected = !!activeMcpKey
 
 	const featuredPicks: FeaturedPick[] = [
 		{
@@ -2939,7 +3124,7 @@ export function IntegrationsView({
 				/>
 			),
 			docsUrl: "https://supermemory.ai/docs/supermemory-mcp/introduction",
-			ctaLabel: "Connect",
+			ctaLabel: mcpConnected ? "Connected" : "Connect",
 			onCta: () => {
 				if (publicMode) {
 					redirectToLogin()
@@ -3340,6 +3525,15 @@ export function IntegrationsView({
 				const count = connectionsByProvider[item.provider].length
 				if (count <= 0) return null
 				return <ConnectionsCountPill count={count} />
+			}
+			case "mcp-client": {
+				if (!activeMcpKey) return null
+				return (
+					<McpConnectedPill
+						connectedAt={activeMcpKey.createdAt}
+						lastActive={activeMcpKey.lastRequest}
+					/>
+				)
 			}
 			case "import": {
 				if (tweetCount <= 0) return null
