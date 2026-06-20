@@ -2456,9 +2456,11 @@ function CategoryFilterToggle({
 function SectionRail({
 	label,
 	children,
+	headerSlot,
 }: {
 	label: string
 	children: ReactNode
+	headerSlot?: ReactNode
 }) {
 	const scrollRef = useRef<HTMLDivElement>(null)
 	const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -2509,6 +2511,7 @@ function SectionRail({
 					{label}
 				</h3>
 				<div className="hidden items-center gap-1.5 sm:flex">
+					{headerSlot}
 					<button
 						type="button"
 						aria-label="Show previous"
@@ -2881,21 +2884,12 @@ export function IntegrationsView({
 			if (item.kind === "connector") {
 				return connectionsByProvider[item.provider].length > 0
 			}
-			if (item.kind === "mcp-client") {
-				return !!activeMcpKey
-			}
 			if (item.kind === "import") {
 				return tweetCount > 0
 			}
 			return false
 		},
-		[
-			activeMcpKey,
-			activePluginById,
-			connectionsByProvider,
-			publicMode,
-			tweetCount,
-		],
+		[activePluginById, connectionsByProvider, publicMode, tweetCount],
 	)
 
 	const counts = useMemo<Record<CategoryFilter, number>>(
@@ -3419,14 +3413,21 @@ export function IntegrationsView({
 			}
 			case "mcp-client":
 				return (
-					<PillButton
+					<button
+						type="button"
+						aria-label={`Connect ${item.name}`}
+						title="Connect"
 						onClick={() => {
 							trackCard(item)
 							openMcpClient(item.clientKey)
 						}}
+						className={cn(
+							"flex size-8 shrink-0 items-center justify-center rounded-full bg-[#0D121A] text-[#A1A1AA] transition-colors hover:text-[#FAFAFA] sm:size-9",
+							"shadow-[inset_1.5px_1.5px_4.5px_rgba(0,0,0,0.7)]",
+						)}
 					>
-						Connect
-					</PillButton>
+						<Plus className="size-4" />
+					</button>
 				)
 			case "import":
 				return (
@@ -3525,15 +3526,6 @@ export function IntegrationsView({
 				const count = connectionsByProvider[item.provider].length
 				if (count <= 0) return null
 				return <ConnectionsCountPill count={count} />
-			}
-			case "mcp-client": {
-				if (!activeMcpKey) return null
-				return (
-					<McpConnectedPill
-						connectedAt={activeMcpKey.createdAt}
-						lastActive={activeMcpKey.lastRequest}
-					/>
-				)
 			}
 			case "import": {
 				if (tweetCount <= 0) return null
@@ -3679,7 +3671,18 @@ export function IntegrationsView({
 											)
 											if (items.length === 0) return null
 											return (
-												<SectionRail key={cat} label={CATEGORY_LABEL[cat]}>
+												<SectionRail
+													key={cat}
+													label={CATEGORY_LABEL[cat]}
+													headerSlot={
+														cat === "ai-clients" && activeMcpKey ? (
+															<McpConnectedPill
+																connectedAt={activeMcpKey.createdAt}
+																lastActive={activeMcpKey.lastRequest}
+															/>
+														) : null
+													}
+												>
 													{items.map((item) => (
 														<div
 															key={item.id}
