@@ -1508,7 +1508,7 @@ function McpRailRow({ entry }: { entry: McpEntry }) {
 		lastTime ? formatRelativeTime(lastTime) : null,
 	]
 		.filter(Boolean)
-		.join(" Â· ")
+		.join(" · ")
 	return (
 		<RailRow
 			icon={entry.icon}
