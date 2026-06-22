@@ -1095,7 +1095,7 @@ function McpConnectedPill({
 			Connected
 			{(lastActive ?? connectedAt) && (
 				<span className="text-[11px] font-normal text-[#737373]">
-					Â· {formatRelativeTime(lastActive ?? connectedAt)}
+					· {formatRelativeTime(lastActive ?? connectedAt)}
 				</span>
 			)}
 		</span>
