@@ -1525,7 +1525,7 @@ function McpRailRow({ entry }: { entry: McpEntry }) {
 								"min-w-0 truncate text-[11px] text-[#737373]",
 							)}
 						>
-							Â· {suffix}
+							· {suffix}
 						</span>
 					)}
 				</div>
