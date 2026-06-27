@@ -19,13 +19,7 @@ import {
 	AppleShortcutsIcon,
 	RaycastIcon,
 } from "@/components/integration-icons"
-import {
-	GoogleDrive,
-	Notion,
-	OneDrive,
-	MCPIcon,
-	Granola,
-} from "@ui/assets/icons"
+import { GoogleDrive, Notion, OneDrive, Granola } from "@ui/assets/icons"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import {
 	ArrowLeft,
@@ -57,6 +51,7 @@ import { addDocumentParam, docParam } from "@/lib/search-params"
 import {
 	useCallback,
 	useEffect,
+	useId,
 	useMemo,
 	useRef,
 	useState,
@@ -412,7 +407,7 @@ const SECTIONS: Array<{
 				dev: c.dev,
 				icon:
 					c.key === "mcp-url" ? (
-						<MCPIcon className="size-6" />
+						<SupermemoryMcpIcon />
 					) : (
 						<Image
 							src={mcpClientIconSrc(c.key)}
@@ -634,6 +629,74 @@ function IconBox({
 		>
 			{children}
 		</div>
+	)
+}
+
+function SupermemoryMcpIcon({ className }: { className?: string }) {
+	const gradientIdBase = useId().replace(/:/g, "")
+	const gradientA = `${gradientIdBase}-mcp-wordmark-a`
+	const gradientB = `${gradientIdBase}-mcp-wordmark-b`
+	const gradientC = `${gradientIdBase}-mcp-wordmark-c`
+
+	return (
+		<svg
+			aria-hidden="true"
+			viewBox="0 0 22 7"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			className={cn("h-auto w-[22px]", className)}
+		>
+			<path
+				d="M0 6.86538V0.134615H2.54399L3.80042 6H3.98732L5.24374 0.134615H7.78774V6.86538H6.45863V1.06731H6.27173L5.02569 6.86538H2.76205L1.51601 1.06731H1.32911V6.86538H0Z"
+				fill={`url(#${gradientA})`}
+			/>
+			<path
+				d="M11.9187 7C11.0188 7 10.3058 6.76923 9.7797 6.30769C9.25359 5.83974 8.99054 5.17308 8.99054 4.30769V2.69231C8.99054 1.82692 9.25359 1.16346 9.7797 0.701923C10.3058 0.233974 11.0188 0 11.9187 0C12.8117 0 13.5005 0.227564 13.9851 0.682693C14.4766 1.13141 14.7223 1.75 14.7223 2.53846V2.59615H13.3724V2.5C13.3724 2.10256 13.2513 1.77564 13.009 1.51923C12.7737 1.26282 12.4102 1.13462 11.9187 1.13462C11.4342 1.13462 11.0534 1.27244 10.7765 1.54808C10.4996 1.82372 10.3612 2.19872 10.3612 2.67308V4.32692C10.3612 4.79487 10.4996 5.16987 10.7765 5.45192C11.0534 5.72756 11.4342 5.86539 11.9187 5.86539C12.4102 5.86539 12.7737 5.73718 13.009 5.48077C13.2513 5.21795 13.3724 4.89103 13.3724 4.5V4.32692H14.7223V4.46154C14.7223 5.25 14.4766 5.8718 13.9851 6.32692C13.5005 6.77564 12.8117 7 11.9187 7Z"
+				fill={`url(#${gradientB})`}
+			/>
+			<path
+				d="M15.8391 6.86538V0.134615H18.8296C19.2865 0.134615 19.688 0.221154 20.0341 0.394231C20.3872 0.560898 20.6606 0.798077 20.8544 1.10577C21.0552 1.41346 21.1556 1.77885 21.1556 2.20192V2.33654C21.1556 2.75321 21.0517 3.11859 20.844 3.43269C20.6433 3.74038 20.3664 3.98077 20.0134 4.15385C19.6672 4.32051 19.2727 4.40385 18.8296 4.40385H17.2098V6.86538H15.8391ZM17.2098 3.25H18.6946C19.02 3.25 19.283 3.16667 19.4838 3C19.6845 2.83333 19.7849 2.60577 19.7849 2.31731V2.22115C19.7849 1.93269 19.6845 1.70513 19.4838 1.53846C19.283 1.37179 19.02 1.28846 18.6946 1.28846H17.2098V3.25Z"
+				fill={`url(#${gradientC})`}
+			/>
+			<defs>
+				<linearGradient
+					id={gradientA}
+					x1="1.08299"
+					y1="-0.00729429"
+					x2="39.3036"
+					y2="7.53871"
+					gradientUnits="userSpaceOnUse"
+				>
+					<stop stopColor="#369BFD" />
+					<stop offset="0.41" stopColor="#36FDFD" />
+					<stop offset="0.79" stopColor="#36FDB5" />
+				</linearGradient>
+				<linearGradient
+					id={gradientB}
+					x1="1.08299"
+					y1="-0.00729429"
+					x2="39.3036"
+					y2="7.53871"
+					gradientUnits="userSpaceOnUse"
+				>
+					<stop stopColor="#369BFD" />
+					<stop offset="0.41" stopColor="#36FDFD" />
+					<stop offset="0.79" stopColor="#36FDB5" />
+				</linearGradient>
+				<linearGradient
+					id={gradientC}
+					x1="1.08299"
+					y1="-0.00729429"
+					x2="39.3036"
+					y2="7.53871"
+					gradientUnits="userSpaceOnUse"
+				>
+					<stop stopColor="#369BFD" />
+					<stop offset="0.41" stopColor="#36FDFD" />
+					<stop offset="0.79" stopColor="#36FDB5" />
+				</linearGradient>
+			</defs>
+		</svg>
 	)
 }
 
@@ -1736,7 +1799,7 @@ function resolveDocSource(
 		return { label: cc.label, icon: pluginIconNode(cc.iconSrc) }
 	}
 	if (doc.source === "mcp") {
-		return { label: "MCP", icon: <MCPIcon className="size-3.5" /> }
+		return { label: "MCP", icon: <SupermemoryMcpIcon className="w-[18px]" /> }
 	}
 	const type = (doc.type ?? "").toLowerCase()
 	if (type.includes("notion")) {
@@ -2956,7 +3019,7 @@ export function IntegrationsView({
 					kind: "mcp",
 					id: "mcp",
 					name: "Supermemory MCP",
-					icon: <MCPIcon className="size-6" />,
+					icon: <SupermemoryMcpIcon />,
 					connectionCount: activeMcpKeys.length,
 					createdAt: activeMcpKey.createdAt ?? null,
 					lastActive: activeMcpKey.lastRequest ?? null,
@@ -3107,7 +3170,7 @@ export function IntegrationsView({
 			headline: "Your AI tools forget everything between chats.",
 			support: "one setup gives Cursor, Claude & ChatGPT your memory",
 			tagline: "Plug your memory into any MCP client.",
-			icon: <MCPIcon className="size-8" />,
+			icon: <SupermemoryMcpIcon className="w-[28px]" />,
 			backdrop: (
 				<Image
 					src="/onboarding/mcp.png"
@@ -4090,7 +4153,7 @@ export function IntegrationsView({
 									className="size-6 rounded object-contain"
 								/>
 							) : (
-								<MCPIcon className="size-6" />
+								<SupermemoryMcpIcon />
 							)}
 						</IconBox>
 						<div className="min-w-0 flex-1">
