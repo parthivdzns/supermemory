@@ -412,7 +412,7 @@ const SECTIONS: Array<{
 				dev: c.dev,
 				icon:
 					c.key === "mcp-url" ? (
-						<SupermemoryMcpIcon />
+						<MCPIcon className="size-6" />
 					) : (
 						<Image
 							src={mcpClientIconSrc(c.key)}
@@ -635,10 +635,6 @@ function IconBox({
 			{children}
 		</div>
 	)
-}
-
-function SupermemoryMcpIcon({ className }: { className?: string }) {
-	return <MCPIcon className={cn("h-auto w-[22px]", className)} />
 }
 
 type InfoUseCase = {
@@ -1740,7 +1736,7 @@ function resolveDocSource(
 		return { label: cc.label, icon: pluginIconNode(cc.iconSrc) }
 	}
 	if (doc.source === "mcp") {
-		return { label: "MCP", icon: <SupermemoryMcpIcon className="w-[18px]" /> }
+		return { label: "MCP", icon: <MCPIcon className="size-3.5" /> }
 	}
 	const type = (doc.type ?? "").toLowerCase()
 	if (type.includes("notion")) {
@@ -2960,7 +2956,7 @@ export function IntegrationsView({
 					kind: "mcp",
 					id: "mcp",
 					name: "Supermemory MCP",
-					icon: <SupermemoryMcpIcon />,
+					icon: <MCPIcon className="size-6" />,
 					connectionCount: activeMcpKeys.length,
 					createdAt: activeMcpKey.createdAt ?? null,
 					lastActive: activeMcpKey.lastRequest ?? null,
@@ -3111,7 +3107,7 @@ export function IntegrationsView({
 			headline: "Your AI tools forget everything between chats.",
 			support: "one setup gives Cursor, Claude & ChatGPT your memory",
 			tagline: "Plug your memory into any MCP client.",
-			icon: <SupermemoryMcpIcon className="w-[28px]" />,
+			icon: <MCPIcon className="size-8" />,
 			backdrop: (
 				<Image
 					src="/onboarding/mcp.png"
@@ -4094,7 +4090,7 @@ export function IntegrationsView({
 									className="size-6 rounded object-contain"
 								/>
 							) : (
-								<SupermemoryMcpIcon />
+								<MCPIcon className="size-6" />
 							)}
 						</IconBox>
 						<div className="min-w-0 flex-1">
